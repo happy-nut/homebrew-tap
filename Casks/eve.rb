@@ -11,9 +11,8 @@ cask "eve" do
 
   app "Eve.app"
 
-  caveats <<~EOS
-    Eve is not notarized. If macOS refuses to open it:
-      xattr -dr com.apple.quarantine /Applications/Eve.app
-    or install with: brew install --cask --no-quarantine happy-nut/tap/eve
-  EOS
+  # not notarized: drop the quarantine flag so Gatekeeper lets it open
+  postflight do
+    system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{appdir}/Eve.app"]
+  end
 end
