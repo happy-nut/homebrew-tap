@@ -17,10 +17,12 @@ cask "kakapo" do
   binary "#{appdir}/Kakapo.app/Contents/Resources/app/bin/kakapo-bundled.sh", target: "kakapo"
 
   # Not notarized, and Homebrew quarantines what it downloads, so without this every launch is a Gatekeeper
-  # refusal. `postflight` is deprecated and prints a warning on install, but it is the only form that can run
-  # a command: postflight_steps exposes neither system_command nor appdir. eve.rb does the same.
-  postflight do
-    system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{appdir}/Kakapo.app"]
+  # refusal. This runs in PREflight, while the bundle is still in the staged path, because install steps
+  # resolve their paths against :staged_path and a step's `args` take no appdir token — the staged copy is
+  # the only spelling available here. It is the same bundle the `app` stanza then moves into appdir, so the
+  # flag is already gone by the time it lands there. eve.rb does the same.
+  preflight_steps do
+    run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "."], chdir: "Kakapo.app"
   end
 
   # a reinstall must not leave the old app running on a review whose files have moved underneath it
